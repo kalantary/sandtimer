@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">SandTimer</string>
+    <string name="text_set">Set = </string>
+    <string name="text_pause">Pause = </string>
+    <string name="text_resume">Resume = </string>
+    <string name="choose_image">Choose Image</string>
+    <string name="button_ok">OK</string>
+    <string name="button_cancel">Cancel</string>
+    <string name="text_finished">Finished!</string>
+    <string name="intent_type_image">image/*</string>
+    <string name="pick_image">Select an image</string>
+</resources>
