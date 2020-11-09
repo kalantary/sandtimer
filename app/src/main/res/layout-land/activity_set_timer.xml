@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SetTimerActivity">
+
+    <ImageView
+        android:id="@+id/image_view_set_timer_image"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/button_cancel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/set_time_picker"
+        app:layout_constraintTop_toBottomOf="@+id/button_choose_image"
+        app:layout_constraintVertical_bias="0.0"
+        app:srcCompat="@drawable/no_image_chosen" />
+
+    <TextView
+        android:id="@+id/textViewSetActivityDebug"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="TextView"
+        app:layout_constraintEnd_toEndOf="@+id/image_view_set_timer_image"
+        app:layout_constraintStart_toStartOf="@+id/image_view_set_timer_image"
+        app:layout_constraintTop_toTopOf="@+id/image_view_set_timer_image" />
+
+    <Button
+        android:id="@+id/button_choose_image"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:onClick="button_choose_image_onclick"
+        android:text="@string/choose_image"
+        app:layout_constraintEnd_toEndOf="@+id/image_view_set_timer_image"
+        app:layout_constraintStart_toStartOf="@+id/image_view_set_timer_image"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TimePicker
+        android:id="@+id/set_time_picker"
+        style="@android:style/Widget.Material.Light.TimePicker"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="16dp"
+        android:outlineProvider="bounds"
+        android:textAlignment="viewStart"
+        android:timePickerMode="spinner"
+        app:layout_constraintBottom_toBottomOf="@+id/image_view_set_timer_image"
+        app:layout_constraintEnd_toEndOf="@+id/button_ok"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/image_view_set_timer_image">
+
+    </TimePicker>
+
+    <Button
+        android:id="@+id/button_ok"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:onClick="button_ok_onclick"
+        android:text="@string/button_ok"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/button_cancel"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/button_cancel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:onClick="button_cancel_onclick"
+        android:text="@string/button_cancel"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/button_ok" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

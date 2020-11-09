@@ -2,248 +2,221 @@ package com.example.sandtimer;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.BackgroundColorSpan;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultCallback;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityOptionsCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import java.util.Timer;
 
-
 public class MainActivity extends AppCompatActivity {
 
-    private String code_digits;
-    private String set_code;
-    private String pause_code;
     private static final int code_length = 4;
-    private static final int REQUEST_CODE_SET_TIMER = 1;
+    private  TimerDataViewModel model;
 
-    private String set_code_partial = "";
-    private String pause_code_partial = "";
-
-    private TimerData2 current_timer;
     private androidx.activity.result.ActivityResultLauncher set_timer_launcher;
-    private android.widget.TextView text_minutes;
-    private android.widget.ProgressBar progressbar_minute;
-    private android.widget.TextView text_pause_resume;
-    ImageView image_waiting_for;
-
-    private java.util.Timer timer = new java.util.Timer();
+    private TextView textViewRemainingMinutes;
+    private ProgressBar progressbar_minute;
+    private TextView text_pause_resume;
+    private ImageView imageViewWaitingFor;
+    private TextView textSetCode;
+    private TextView textPauseCode;
+    private java.util.Timer timer_ui_update = new java.util.Timer();
+    TextView textViewDebug;
 
     public MainActivity() {
 
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
+        if(isFinishing())
+            cancelSystemAlarm();
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        model.saveInstanceState(outState);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
     }
 
-    private void create_random_codes(){
-        java.util.ArrayList<String> digits = new java.util.ArrayList<String>();
-        for(int d = 0; d < 10; d++)
-            digits.add(String.valueOf(d));
-
-        java.util.Collections.shuffle(digits);
-        java.util.ArrayList<String> chosen_digits = new java.util.ArrayList<String>();
-        for(int i = 0; i < code_length; i++)
-            chosen_digits.add(digits.get(i));
-
-        code_digits = "";
-        for(int i = 0; i < code_length; i++)
-            code_digits += chosen_digits.get(i);
-
-        java.util.Collections.shuffle(chosen_digits);
-        set_code = "";
-        for(int i = 0; i < code_length; i++)
-            set_code += chosen_digits.get(i);
-
-        pause_code = set_code;
-        while(pause_code.equals(set_code))
-        {
-            java.util.Collections.shuffle(chosen_digits);
-            pause_code = "";
-            for (int i = 0; i < code_length; i++)
-                pause_code += chosen_digits.get(i);
-        }
-
-    }
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        create_random_codes();
-
-        setContentView(R.layout.activity_main);
-        text_minutes = findViewById(R.id.text_minutes);
-        progressbar_minute = findViewById(R.id.progressbar_minute);
-        text_pause_resume = findViewById(R.id.text_pause);
-        image_waiting_for = findViewById(R.id.image_waiting_for);
-
-        set_code_texts();
-
-        set_timer_launcher = registerForActivityResult(new SetTimerActivityResultContract(),
-                new ActivityResultCallback<TimerData2>()
-                {
-                    @Override
-                    public void onActivityResult(TimerData2 result) {
-                        set_new_timer(result);
-                    }
-                });
+    protected void onPostResume() {
+        super.onPostResume();
+        start_ui_update_timer();
     }
-    private void set_code_texts() {
+
+    private void setRandomCodesForButtons(){
+        String code_digits = model.getCodeDigits();
         int i = 0;
         ((android.widget.Button)findViewById(R.id.button_set_1)).setText(code_digits.substring(i++, i));
         ((android.widget.Button)findViewById(R.id.button_set_2)).setText(code_digits.substring(i++, i));
         ((android.widget.Button)findViewById(R.id.button_set_3)).setText(code_digits.substring(i++, i));
         ((android.widget.Button)findViewById(R.id.button_set_4)).setText(code_digits.substring(i++, i));
-        ((android.widget.TextView) findViewById(R.id.text_set_code)).setText(set_code);
-        ((android.widget.TextView) findViewById(R.id.text_pause_code)).setText(pause_code);
+        textSetCode.setText(model.getSetCode());
+        textPauseCode.setText(model.getPauseCode());
     }
-    public void button_onclick(android.view.View view) {
-        android.widget.Button b = (android.widget.Button) view;
-        String digit = b.getText().toString();
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-        set_code_partial += digit;
-        if (set_code_partial.equals(set_code)) {
-            set_code_partial = "";
-            pause_code_partial = "";
-            launch_set_timer_activity();
-            return;
+        textViewRemainingMinutes = findViewById(R.id.text_minutes);
+        progressbar_minute = findViewById(R.id.progressbar_minute);
+        text_pause_resume = findViewById(R.id.text_pause);
+        imageViewWaitingFor = findViewById(R.id.image_waiting_for);
+        textSetCode = findViewById(R.id.text_set_code);
+        textPauseCode = findViewById(R.id.text_pause_code);
+        textViewDebug = findViewById(R.id.textViewDebug);
+
+        textViewDebug.setVisibility(View.GONE);
+
+        model = new ViewModelProvider(this, TimerDataViewModel.getFactory(code_length)).get(TimerDataViewModel.class);
+        if(savedInstanceState != null) {
+            model.loadInstanceState(savedInstanceState);
+            textViewDebug.setText("saved code digits " + model.getCodeDigits());
         }
-        if(!set_code_partial.equals(set_code.substring(0, set_code_partial.length())))
-            set_code_partial = "";
+        else
+            textViewDebug.setText("saved instance is null");
 
-        //((android.widget.TextView)findViewById(R.id.text_set)).setText(set_code_partial);
+        setRandomCodesForButtons();
 
-        pause_code_partial += digit;
-        if (pause_code.equals(pause_code_partial)) {
-            set_code_partial = "";
-            pause_code_partial = "";
-            pause_or_resume_timer();
-            return;
-        }
-        if (!pause_code_partial.equals(pause_code.substring(0, pause_code_partial.length())))
-            pause_code_partial = "";
-
-        //((android.widget.TextView)findViewById(R.id.text_pause)).setText(pause_code_partial);
-
+        set_timer_launcher = registerForActivityResult(new SetTimerActivityResultContract(),
+                new ActivityResultCallback<TimerData>()
+                {
+                    @Override
+                    public void onActivityResult(TimerData result) {
+                        if(result == null) return;
+                        model.setTimerData(result);
+                        start_timer();
+                    }
+                });
     }
-    private void launch_set_timer_activity()
-    {
-        set_timer_launcher.launch(current_timer);
-    }
-
-
-    private void set_new_timer(TimerData2 td)
-    {
-        if(td == null) return;
-        current_timer = td;
+    private void start_timer() {
+        TimerData current_timer = model.getTimerData();
         current_timer.start();
-        text_minutes.setText(String.format("%d",current_timer.get_remaining_minutes()));
-        image_waiting_for.setImageBitmap(current_timer.getImage());
-        progressbar_minute.setProgress(0);
-        start_timer();
+        setSystemAlarm();
+        start_ui_update_timer();
     }
-    private void start_timer()
-    {
-        android.app.AlarmManager alarm_manager = (android.app.AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        android.content.Intent intent = new android.content.Intent(this, AlarmFinishedActivity.class);
-        current_timer.save_image(this);
+    private void setSystemAlarm() {
+        TimerData current_timer = model.getTimerData();
+        AlarmManager alarm_manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, AlarmFinishedActivity.class);
         SetTimerActivityResultContract.putExtra(current_timer, intent);
         PendingIntent pending_intent = android.app.PendingIntent.getActivity
                 (this, current_timer.getCode(),
-                intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        alarm_manager.setExact(android.app.AlarmManager.RTC_WAKEUP, current_timer.get_end_time(), pending_intent);
-        start_ui_update_timer();
-        text_pause_resume.setText(R.string.text_pause);
+                        intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        alarm_manager.setExact(AlarmManager.RTC_WAKEUP, current_timer.get_end_time(), pending_intent);
     }
-    private void pause_or_resume_timer()
-    {
-        if(text_pause_resume.getText().equals(getString(R.string.text_pause)))
-            pause_timer();
-        else
-            resume_timer();
-    }
-    private void pause_timer() {
-        text_pause_resume.setText(R.string.text_resume);
-
-        timer.cancel();
-        timer.purge();
-
-        current_timer.pause();
-
-        //todo: cancel or pause alarm in system
+    private void cancelSystemAlarm() {
+        TimerData current_timer = model.getTimerData();
+        if(current_timer == null) return;
         AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
         PendingIntent pendingIntent = PendingIntent.getActivity
                 (this, current_timer.getCode(),
                         new Intent(this, AlarmFinishedActivity.class),
-                                        PendingIntent.FLAG_NO_CREATE);
+                        PendingIntent.FLAG_NO_CREATE);
         if (pendingIntent != null && alarmManager != null)
-          alarmManager.cancel(pendingIntent);
+            alarmManager.cancel(pendingIntent);
     }
-    private void resume_timer()
-    {
-        text_pause_resume.setText(R.string.text_pause);
-        current_timer.resume();
-        start_ui_update_timer();
-
-        Intent intent = new Intent(this, AlarmFinishedActivity.class);
-        SetTimerActivityResultContract.putExtra(current_timer, intent);
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        PendingIntent pending_intent = PendingIntent.getActivity(this, current_timer.getCode(),
-                intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, current_timer.get_end_time(), pending_intent);
-    }
-
-    private void start_ui_update_timer()
-    {
-        timer = new Timer();
-        timer.schedule(new java.util.TimerTask()
+    private void start_ui_update_timer() {
+        timer_ui_update = new Timer();
+        timer_ui_update.schedule(new java.util.TimerTask()
         {
             @Override
             public void run() {
                 runOnUiThread(new Runnable(){
                     @Override
                     public void run() {
-                         long this_minute_progress = current_timer.get_remaining_seconds() % 60;
-                        progressbar_minute.setProgress((int)this_minute_progress);
-                        long remaining_minutes = current_timer.get_remaining_minutes();
-                        if(this_minute_progress > 0) remaining_minutes++;
-                        text_minutes.setText(String.format("%d", remaining_minutes));
-                        if(remaining_minutes == 0)
-                        {
-                            timer.cancel();
-                            timer.purge();
-                        }
+                        update_ui();
                     }
                 });
             }
         }, 0, 500);
     }
+    public void button_onclick(android.view.View view) {
+        android.widget.Button b = (android.widget.Button) view;
+        String digit = b.getText().toString();
+
+        String match = model.match_code_digit(digit);
+        if(match.equals(model.getSetCode()))
+            set_timer_launcher.launch(model.getTimerData());
+        else if (match.equals(model.getPauseCode()))
+            pause_or_resume_timer();
+    }
+    private void pause_or_resume_timer() {
+        TimerData current_timer = model.getTimerData();
+        if(current_timer == null || current_timer.isFinished()) return;
+
+        if(current_timer.getIs_paused()) {
+            current_timer.resume();
+            setSystemAlarm();
+            start_ui_update_timer();
+        }
+        else {
+            current_timer.pause();
+            cancelSystemAlarm();
+        }
+    }
+    private void update_ui() {
+        TimerData current_timer = model.getTimerData();
+        if(current_timer == null)
+        {
+            progressbar_minute.setProgress(0);
+            textViewRemainingMinutes.setText(getString(R.string.timer_not_set));
+            imageViewWaitingFor.setImageBitmap(null);
+            text_pause_resume.setText(R.string.textViewPause);
+        }
+        else {
+            current_timer.load_image(this);
+
+            long this_minute_progress = current_timer.get_remaining_seconds() % 60;
+            progressbar_minute.setProgress((int) this_minute_progress);
+
+            long remaining_minutes = Math.max(0, current_timer.get_remaining_minutes());
+            if (this_minute_progress > 0) remaining_minutes++;
+            textViewRemainingMinutes.setText(String.format("%d", remaining_minutes));
+            imageViewWaitingFor.setImageBitmap(current_timer.getImage());
+            text_pause_resume.setText(current_timer.getIs_paused() ? R.string.text_resume : R.string.textViewPause);
+
+            if (remaining_minutes == 0 || current_timer.getIs_paused()) {
+                timer_ui_update.cancel();
+                timer_ui_update.purge();
+            }
+        }
+
+        int setCodeMatchLength = model.getSetCodeMatchLength();
+        Spannable spannableSetCode = new SpannableString(model.getSetCode());
+        spannableSetCode.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, setCodeMatchLength, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        textSetCode.setText(spannableSetCode);
+
+        int pauseCodeMatchLength = model.getPauseCodeMatchLength();
+        Spannable spannablePauseCode = new SpannableString(model.getPauseCode());
+        spannablePauseCode.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, pauseCodeMatchLength, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        textPauseCode.setText(spannablePauseCode);
+    }
 }
+
+
+
+
+
+

@@ -6,7 +6,7 @@ import android.os.Bundle;
 
 public class AlarmFinishedActivity extends AppCompatActivity {
 
-    TimerData2 td;
+    TimerData td;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -15,7 +15,7 @@ public class AlarmFinishedActivity extends AppCompatActivity {
 
         android.content.Intent intent = getIntent();
         td = SetTimerActivityResultContract.fromExtras(intent);
-
+        td.load_image(this);
         ((android.widget.ImageView)findViewById(R.id.image_finished_waiting_for)).setImageBitmap(td.getImage());
     }
 

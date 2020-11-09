@@ -3,36 +3,33 @@ package com.example.sandtimer;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.TimePicker;
+
 import androidx.activity.result.ActivityResult;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.List;
+import java.util.ArrayList;
 
 public class SetTimerActivity extends AppCompatActivity {
 
-    private TimerData2 input_timer;
-    ImageView image_view;
-    private android.widget.TimePicker tp;
+    private TimerData current_timer;
+    private ImageView image_view;
+    private TimePicker timePicker;
+    private TextView textViewDebug;
     ActivityResultLauncher get_image_launcher;
     Intent intent_image_chooser;
+    private ArrayList<String> tempFilePaths = new ArrayList<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,30 +37,74 @@ public class SetTimerActivity extends AppCompatActivity {
 
         create_get_image_launcher();
 
-
-        tp = findViewById(R.id.set_time_picker);
-        tp.setIs24HourView(true);
-
+        timePicker = findViewById(R.id.set_time_picker);
+        timePicker.setIs24HourView(true);
         image_view = findViewById(R.id.image_view_set_timer_image);
+        textViewDebug = findViewById(R.id.textViewSetActivityDebug);
+        textViewDebug.setVisibility(View.GONE);
 
+        if(savedInstanceState != null) {
+            current_timer = savedInstanceState.getParcelable(KEY_CURRENT_TIMER);
+            boolean hasSavedImage = savedInstanceState.getBoolean(KEY_HAS_SAVED_IMAGE);
+            tempFilePaths = savedInstanceState.getStringArrayList(KEY_IMAGE_FILE_PATH);
+            Bitmap image = null;
+            if(hasSavedImage) {
+                String filePath = tempFilePaths.get(tempFilePaths.size() - 1);
+                image = Util.loadTemporaryImage(filePath);
+                current_timer.setImage(image);
+            }
+            textViewDebug.setText("savedInstanceState is not null\n hasSavedImage = " + hasSavedImage
+            +", image is "+(image == null?"":"NOT")+"null");
+        }
+        else
+        {
+            textViewDebug.setText("savedInstanceState is null");
+            Intent intent = getIntent();
+            current_timer = SetTimerActivityResultContract.fromExtras(intent);
+            if(current_timer == null) current_timer = new TimerData();
+        }
 
-        android.content.Intent intent = getIntent();
-        input_timer = SetTimerActivityResultContract.fromExtras(intent);
-        input_timer.load_image(this);
-
-        show_current_timer();
-
-
+        current_timer.load_image(this);
+        updateUI();
     }
+
+    private static final String KEY_CURRENT_TIMER = "current_timer";
+    private static final String MY_NAME = "sta";
+    private static final String KEY_HAS_SAVED_IMAGE = "has_saved_image";
+    private static final String KEY_IMAGE_FILE_PATH = "image_file_path";
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        saveSelectedTime();
+        outState.putParcelable(KEY_CURRENT_TIMER, current_timer);
+        boolean saveImage = current_timer != null && current_timer.hasUnsavedImage();
+        if(saveImage) {
+            String filePath = Util.saveTemporaryImage(this, MY_NAME, current_timer.getImage());
+            tempFilePaths.add(filePath);
+        }
+        outState.putStringArrayList(KEY_IMAGE_FILE_PATH, tempFilePaths);
+        outState.putBoolean(KEY_HAS_SAVED_IMAGE, saveImage);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(isFinishing())
+            Util.deleteFiles(tempFilePaths);
+    }
+
     private void create_get_image_launcher() {
         final Intent intent_pick = new Intent();
         intent_pick.setAction(Intent.ACTION_PICK);
-        intent_pick.setType(getString(R.string.intent_type_image));
-        //intent_pick.addCategory(Intent.CATEGORY_OPENABLE);
-        //intent_pick.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+        intent_pick.setType(getString(R.string.MIME_data_type_image));
+
+        Intent intent_open_document = new Intent();
+        intent_open_document.setAction(Intent.ACTION_OPEN_DOCUMENT);
+        intent_open_document.setType(getString(R.string.MIME_data_type_image));
+
         Intent intent_capture = new Intent();
         intent_capture.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
-        Intent[] array_intent = { intent_capture};
+        Intent[] array_intent = { intent_capture , intent_open_document};
 
 
         intent_image_chooser = Intent.createChooser(intent_pick, getString(R.string.pick_image));
@@ -78,19 +119,13 @@ public class SetTimerActivity extends AppCompatActivity {
                             Bitmap bitmap = null;
                             Uri imageUri = null;
 
-                            // from camera
-                            if(intent.getExtras() != null)
-                            {
-                               bitmap = (Bitmap) intent.getParcelableExtra("data");
-                               set_image_from_bitmap(bitmap);
-                            }
                             // from gallery
-                            else
-                            {
+                            if(intent.getData() != null)
                                 imageUri = intent.getData();
-                                set_image_from_Media_store(imageUri);
+                            // from camera
+                            else if (intent.getExtras() != null)
+                               bitmap = (Bitmap) intent.getParcelableExtra("data");
 
-                            }
                             change_timer_image(imageUri, bitmap);
                         }
                     }
@@ -99,64 +134,59 @@ public class SetTimerActivity extends AppCompatActivity {
 
     private void change_timer_image(Uri imageUri, Bitmap bitmap)
     {
-        try {
-
-            bitmap = android.provider.MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if(bitmap == null && imageUri != null) {
+            bitmap = Util.load_image(this, imageUri);
         }
 
         image_view.setImageBitmap(bitmap);
-        image_view.setTag(bitmap);
+        current_timer.setImage(bitmap);
     }
-    private void show_current_timer() {
-        int hour = 0;
-        int minutes = 0;
-        if(input_timer != null) {
-            image_view.setImageBitmap(input_timer.getImage());
-            image_view.setTag(input_timer.getImage());
+    private void updateUI() {
+        image_view.setImageBitmap(current_timer.getImage());
+        setTimePickerTime();
+    }
+    private void setTimePickerTime() {
+        int remaining_minutes = current_timer.get_remaining_minutes();
+        int hour = remaining_minutes / 60;
+        int minute = remaining_minutes % 60;
 
-            int remaining_minutes = input_timer.get_remaining_minutes();
-             hour = remaining_minutes / 60;
-             minutes = remaining_minutes % 60;
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            tp.setHour(hour);
+            timePicker.setHour(hour);
         else
-            tp.setCurrentHour(hour);
+            timePicker.setCurrentHour(hour);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            tp.setMinute(minutes);
+            timePicker.setMinute(minute);
         }
         else
-            tp.setCurrentMinute(minutes);
+            timePicker.setCurrentMinute(minute);
     }
-
-    public void button_ok_onclick(android.view.View view)
-    {
+    private void saveSelectedTime(){
         int hour;
         int minute;
-        Bitmap image = (Bitmap)image_view.getTag();
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            hour = tp.getHour();
-            minute = tp.getMinute();
+            hour = timePicker.getHour();
+            minute = timePicker.getMinute();
         }
         else
         {
-            hour = tp.getCurrentHour();
-            minute = tp.getCurrentMinute();
+            hour = timePicker.getCurrentHour();
+            minute = timePicker.getCurrentMinute();
         }
-
+        current_timer.resetTimer(hour, minute);
+    }
+    public void button_ok_onclick(android.view.View view) {
+        saveSelectedTime();
         android.content.Intent intent = new android.content.Intent();
-        TimerData2 td = TimerData2.fromTimerData(input_timer, hour, minute, image);
 
-        SetTimerActivityResultContract.putExtra(td, intent);
+        current_timer.save_image(this);
+        SetTimerActivityResultContract.putExtra(current_timer, intent);
         setResult(RESULT_OK, intent);
 
         finish();
     }
-    public void button_cancel_onclick(android.view.View view)
-    {
+    public void button_cancel_onclick(android.view.View view) {
         setResult(RESULT_CANCELED);
         finish();
     }

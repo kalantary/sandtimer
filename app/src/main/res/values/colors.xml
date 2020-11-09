@@ -6,4 +6,5 @@
     <color name="circular_progressbar_back">#CCC</color>
     <color name="circular_progressbar_front">#4E84D6</color>
     <color name="fireworks">#FA43D2</color>
+    <color name="entered_code">#FFEB3B</color>
 </resources>

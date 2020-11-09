@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@android:id/background">
+        <scale
+            android:drawable="@drawable/sandtimer_full"
+             android:level="1"
+            >
+        </scale>
+    </item>
+    <item android:id="@android:id/secondaryProgress">
+        <clip>
+            <shape
+                android:innerRadiusRatio="2.2"
+                android:shape="ring"
+                android:thickness="4dp"
+                android:useLevel="false">
+                <solid android:color="#ffff0000" />
+            </shape>
+        </clip>
+    </item>
+
+    <item android:id="@android:id/progress">
+        <scale android:scaleGravity="center"
+            android:scaleHeight="0.8"
+            >
+<layer-list>
+    <item>
+        <clip
+            android:gravity="bottom"
+            android:drawable="@drawable/sandtimer_progress_bottom"
+            android:clipOrientation="vertical" />
+    </item>
+    <item>
+        <clip
+
+            android:gravity="top"
+            android:clipOrientation="vertical"
+            android:drawable="@drawable/sandtimer_progress_top"
+            >
+        </clip>
+    </item>
+</layer-list>
+        </scale>
+    </item>
+    <item>
+        <scale
+            android:drawable="@drawable/sandtimer"
+            >
+        </scale>
+    </item>
+</layer-list>

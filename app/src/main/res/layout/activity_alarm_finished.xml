@@ -20,7 +20,7 @@
 
     <Button
         android:id="@+id/button_ok"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
@@ -29,9 +29,8 @@
         android:text="@string/button_ok"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        />
-
+        app:layout_constraintStart_toStartOf="parent" />
+<!--
     <ImageView
         android:id="@+id/image_fireworks"
         android:layout_width="0dp"
@@ -45,6 +44,23 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/image_finished_waiting_for"
         app:srcCompat="@drawable/fireworks" />
+        -->
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/image_fireworks"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/button_ok"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/image_finished_waiting_for"
+
+        app:lottie_rawRes="@raw/fireworks_17297"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"/>
 
     <TextView
         android:id="@+id/text_finished"

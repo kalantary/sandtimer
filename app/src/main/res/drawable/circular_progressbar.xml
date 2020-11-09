@@ -18,7 +18,7 @@
                 android:shape="ring"
                 android:thickness="4dp"
                 android:useLevel="false">
-                <solid android:color="#dde" />
+                <solid android:color="#ffff0000" />
             </shape>
         </clip>
     </item>
