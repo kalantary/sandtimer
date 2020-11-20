@@ -10,4 +10,5 @@
     <string name="MIME_data_type_image">image/*</string>
     <string name="pick_image">Select an image</string>
     <string name="timer_not_set">---</string>
+    <string name="image_waiting_for">Timer for</string>
 </resources>

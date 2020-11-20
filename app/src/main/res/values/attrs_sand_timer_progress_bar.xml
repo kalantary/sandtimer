@@ -1,0 +1,14 @@
+<resources>
+    <declare-styleable name="SandTimerProgressBar">
+        <attr name="exampleString" format="string" />
+        <attr name="exampleDimension" format="dimension" />
+        <attr name="exampleColor" format="color" />
+        <attr name="exampleDrawable" format="color|reference" />
+        <attr name="ProgressSeconds" format="integer"/>
+        <attr name="MaxSeconds" format="integer"/>
+        <attr name="LidHeightRatio" format="float"/>
+        <attr name="MiddleWidthRatio" format="float"/>
+        <attr name="PaddingGlassRatio" format="float"/>
+
+    </declare-styleable>
+</resources>

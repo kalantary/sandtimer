@@ -35,10 +35,12 @@ public class MainActivity extends AppCompatActivity {
     private TextView textPauseCode;
     private java.util.Timer timer_ui_update = new java.util.Timer();
     TextView textViewDebug;
+    SandTimerProgressBar imageSandTimer;
 
     public MainActivity() {
 
     }
+
 
     @Override
     protected void onDestroy() {
@@ -86,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
         textSetCode = findViewById(R.id.text_set_code);
         textPauseCode = findViewById(R.id.text_pause_code);
         textViewDebug = findViewById(R.id.textViewDebug);
+        imageSandTimer = findViewById(R.id.image_sandtimer);
 
         textViewDebug.setVisibility(View.GONE);
 
@@ -197,6 +200,10 @@ public class MainActivity extends AppCompatActivity {
             imageViewWaitingFor.setImageBitmap(current_timer.getImage());
             text_pause_resume.setText(current_timer.getIs_paused() ? R.string.text_resume : R.string.textViewPause);
 
+            int wait_seconds = current_timer.getWait_duration_seconds();
+            int progressSeconds = current_timer.getElapsedSeconds();
+            imageSandTimer.setMaxSeconds(wait_seconds);
+            imageSandTimer.setProgressSeconds(progressSeconds);
             if (remaining_minutes == 0 || current_timer.getIs_paused()) {
                 timer_ui_update.cancel();
                 timer_ui_update.purge();

@@ -15,6 +15,7 @@ public class TimerData implements Parcelable {
 
     private long wait_duration_milliseconds;
     public long getWait_duration_milliseconds(){ return wait_duration_milliseconds; }
+    public int getWait_duration_seconds(){ return (int)(wait_duration_milliseconds / 1000); }
 
     private long paused_duration_milliseconds;
     public long getPaused_duration_milliseconds(){ return paused_duration_milliseconds; }
@@ -198,5 +199,9 @@ public class TimerData implements Parcelable {
 
     public boolean hasUnsavedImage() {
         return image != null && image_file_path == null;
+    }
+
+    public int getElapsedSeconds() {
+        return getWait_duration_seconds() - get_remaining_seconds();
     }
 }
