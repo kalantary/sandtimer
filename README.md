@@ -4,8 +4,8 @@ sandtimer is a simple timer with hourglass visualization designed for children t
 
 ### Screenshots
 
-![image1](https://raw.githubusercontent.com/kalantary/sandtimer/master/Screenshot_20210208-155046_SandTimer.jpg)
-![image2](https://raw.githubusercontent.com/kalantary/sandtimer/master/Screenshot_20210208-155137_SandTimer.jpg)
+![image1](https://raw.githubusercontent.com/kalantary/sandtimer/master/screenshots/Screenshot1.jpg)
+![image2](https://raw.githubusercontent.com/kalantary/sandtimer/master/screenshots/Screenshot2.jpg)
 
 ### Features
 
